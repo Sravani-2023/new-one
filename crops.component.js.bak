@@ -1,0 +1,372 @@
+import React, { Component, Fragment, useState } from "react";
+import UserService from "../services/user.service";
+import EventBus from "../services/eventbus.service";
+
+import {
+  Container,
+  Card,
+  Alert,
+  Row,
+  Col,
+  ProgressBar,
+  ProgressBarProps,
+  ToggleButtonGroup,
+  ToggleButton,
+  Form,
+} from "react-bootstrap";
+
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faMapMarkerAlt, faMap } from "@fortawesome/free-solid-svg-icons";
+
+import MaterialTable from 'material-table';
+import CropsFarmersListTable from 'material-table';
+import TableRow from "@material-ui/core/TableRow";
+import TableCell from "@material-ui/core/TableCell";
+import TabCard from "@material-ui/core/Card";
+
+import { MuiThemeProvider, createMuiTheme } from "@material-ui/core/styles";
+import tableIcons from './icons';
+
+import CropsFarmersList from "./cropsNestedFarmerDetails.component";
+
+import notVerifiedIcon from "../assets/img/thick-cross-mark.svg";
+import verifiedIcon from "../assets/img/double-check.svg";
+
+import "../index.css";
+import "../assets/css/crops.css";
+import cropsNestedFarmerDetails from "./cropsNestedFarmerDetails.component";
+
+var cropFilterKeys = {  date        :   {},
+                        season      :   {},
+                        verified    :   {}
+                     };
+var selCropsFarmerData = [];
+
+/* const FunctionalComponent = (cropid, season, year) => {
+   return (
+     
+   );
+ }; */
+
+export default class CropsList extends Component  {
+
+    constructor(props){
+        super(props);
+        this.state = {
+            cropsData   :   {},
+            cropFarmersList : {},
+            isCropsPageLoading  :   false,
+            yearList: [],
+            seasonList: [],
+            cropStatusList: [],
+            currYear    :   "",
+            currSeason  :   "",
+            currCropStatus  :   "",
+            content :   "",
+            selectedYear    : "0",
+            selectedCropStatus  :   "0",
+            selectedSeason  :   "0"
+        };
+    }
+
+    getCropsData = () => {
+        UserService.getCropsList().then(
+            (response) => {
+              console.log(response.data,"__",response.data.date,"__",response.data.season,"__",response.data.verified);
+              cropFilterKeys = {
+                date        :   response.data.date,
+                season      :   response.data.season,
+                verified    :   response.data.verified
+              }
+              this.setState({
+                isCropsPageLoading: false,
+                cropsData: response.data,
+                yearList : response.data.date,
+                seasonList  :   response.data.season,
+                cropStatusList  :   response.data.verified
+              });
+            },
+            (error) => {
+              this.setState({
+                isCropsPageLoading: false,
+                content:
+                  (error.response &&
+                    error.response.data &&
+                    error.response.data.message) ||
+                  error.message ||
+                  error.toString(),
+              });
+            }
+          );
+    };
+
+    createYearOptions = (yearList) =>
+    yearList.length
+      ? yearList.map((data) => (
+          <option key={data.id} value={data.year}>
+            {data.year}
+          </option>
+        ))
+      : "";
+    createSeasonOptions = (seasonList) =>
+    seasonList.length
+      ? seasonList.map((data) => (
+          <option key={data.id} value={data.season}>
+            {data.season}
+          </option>
+        ))
+      : "";
+    createCropStatusOptions = (cropStatusList) =>
+    cropStatusList.length
+      ? cropStatusList.map((data) => (
+          (data.is_verified === 1) ? (
+            <option key={data.id} value={data.is_verified}>
+                Verified
+            </option>) : (
+                <option key={data.id} value={data.is_verified}>
+                    Unverified
+                </option>
+          )
+        ))
+      : "";
+    
+    
+
+    getFarmersList = (getCropId, seasonId, year, cropStatus, cropName) => {
+        //this.getFarmersList(rowData.crop__id, rowData.season, rowData.year, rowData.is_verified);
+                                            //console.log("Inside detailpanel render ", this.state.cropFarmersList);
+                                            //this.getFarmersList(rowData.crop__id, rowData.season, rowData.year, rowData.is_verified);
+                                            var fetchedFarmersList = [];
+                                            UserService.getCropsFramersList(getCropId, ""+seasonId+"", year, cropStatus).then(
+                                                (response) => {
+                                                  console.log("Farmer data ",response.data," for ", getCropId);
+                                                  this.setState({
+                                                    cropFarmersList: response.data
+                                                  },() => this.sendDataToFarmersListPage(response.data, cropName));
+                                                },
+                                                (error) => {
+                                                  this.setState({
+                                                    content:
+                                                      (error.response &&
+                                                        error.response.data &&
+                                                        error.response.data.message) ||
+                                                      error.message ||
+                                                      error.toString(),
+                                                  });
+                                                }
+                                              );
+                                            
+        /* console.log("selected crop Id ",getCropId,"_",seasonId,"_",year,"_",cropStatus);
+        selCropsFarmerData = [];
+        UserService.getCropsFramersList(getCropId, ""+seasonId+"", year, cropStatus).then(
+            (response) => {
+              console.log("Farmer data ",response.data," for ",getCropId);
+              this.setState({
+                cropFarmersList : response.data
+              },() => {selCropsFarmerData = [response.data];});
+            },
+            (error) => {
+              this.setState({
+                content:
+                  (error.response &&
+                    error.response.data &&
+                    error.response.data.message) ||
+                  error.message ||
+                  error.toString(),
+              });
+            }
+          ); */
+    };
+    sendDataToFarmersListPage = (getFarmersListData, selCropName) =>{
+        console.log("Farmers render func ", getFarmersListData);
+        EventBus.dispatch("selCropFarmerDets", {farmersList: getFarmersListData, cropSelected: selCropName});
+        this.props.history.push("/"+cropsNestedFarmerDetails+"");
+        /* return (
+            <CropsFarmersListTable
+                title=""
+                columns={[
+                    { title: "Farmer Name", field: "farmer__first_name", field: "farmer__last_name", render: rowData => rowData.farmer__first_name+rowData.farmer__last_name },
+                    { title: "Site Details", field: "farmer_site__siteName", field: "TotalArea", field: "farmer__village", render: rowData => {
+                        return(<div className="wrap">
+                            <Row>
+                                <Col lg="4" md="4" sm="4">
+                                    Site Name:&nbsp;{rowData.farmer_site__siteName}
+                                </Col>
+                                <Col lg="4" md="4" sm="4">
+                                    Total Area:&nbsp;{rowData.TotalArea}&nbsp;Acres
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col lg="8" md="8" sm="8">
+                                    <FontAwesomeIcon
+                                    icon={faMapMarkerAlt}
+                                    className="dvaraGreenText"
+                                    ></FontAwesomeIcon>&nbps;{rowData.farmer__village}
+                                </Col>
+                            </Row>
+                        </div>);
+                    }},
+                    { title: "Cropping Info", field: "crop_yield", field: "duratio", field:"sowing_date", field: "harvest_date", field: "month",
+                    render: rowData => {
+                        return(<div className="wrap">
+                            <Row>
+                                <Col lg="4" md="4" sm="4">
+                                    Total Crop Yield:&nbsp;{rowData.crop_yield}
+                                </Col>
+                                <Col lg="4" md="4" sm="4">
+                                    Duration:&nbsp;{rowData.duration}&nbsp;Days
+                                </Col>
+                                <Col lg="4" md="4" sm="4">
+                                    Month(s):&nbsp;{rowData.month}
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col lg="4" md="8" sm="8">
+                                   <i className="CroppingFarmerDetsIcon CroppingFarmerSowingIcon" />&nbsp;{rowData.sowing_date}
+                                </Col>
+                                <Col lg="4" md="8" sm="8">
+                                   <i className="CroppingFarmerDetsIcon CroppingFarmerHarvestIcon" />&nbsp;{rowData.sowing_date}
+                                </Col>
+                            </Row>
+                        </div>);
+                    }
+                    }
+                ]}
+                data={getFarmersListData}
+            />
+        ); */
+    };
+
+    render() {
+        const { cropsData, yearList, seasonList, cropStatusList, cropFarmersList } = this.state;
+        return(
+            <Fragment>
+            <section className="mainWebContentSection">
+                
+                {this.state.isCropsPageLoading ? (  
+                    <div className="wrap landHoldingPageLoaderWrap">
+                        <span className="spinner-border spinner-border landHoldingPageTabLoader"></span>
+                    </div>
+                    ) : (                    
+                    <div className="CropsListMainSection wrap">
+                        <Row className="">
+                        <Col xs lg="12" className="CropsListPane">
+                            <div className="CropsHeader">
+                                <Row className="">
+                                    <Col xs lg="2" className="">
+                                        <h2 className="CropsListHeading dvaraBrownText">
+                                            Crops List
+                                        </h2>
+                                    </Col>
+                                    <Col xs lg="10" className="">                                        
+                                        <Form id="cropFilterSelectionsForm" className="cropsForm">
+                                        <Row>
+                                            <Col lg="4" className="">
+                                                <Form.Group controlId="cropFilterSelectionsForm.selectYearControl">
+                                                    <Form.Label>Year</Form.Label>
+                                                    <Form.Control as="select">
+                                                        <option value="0">--All--</option>
+                                                        {this.createYearOptions(yearList)}
+                                                    </Form.Control>
+                                                </Form.Group>                                        
+                                            </Col>
+                                            <Col xs lg="4" className="">                                        
+                                                
+                                                    <Form.Group controlId="cropFilterSelectionsForm.selectSeasonControl">
+                                                        <Form.Label>Season</Form.Label>
+                                                        <Form.Control as="select">
+                                                            <option value="0">--All--</option>
+                                                            {this.createSeasonOptions(seasonList)}
+                                                        </Form.Control>
+                                                    </Form.Group>
+                                            </Col>
+                                            <Col xs lg="4" className="">  
+                                                <Form.Group controlId="cropFilterSelectionsForm.selectCropStatusControl">
+                                                    <Form.Label>Crop Status</Form.Label>
+                                                    <Form.Control as="select">
+                                                        <option value="0">--All--</option>
+                                                        {this.createCropStatusOptions(cropStatusList)}
+                                                    </Form.Control>
+                                                </Form.Group>
+                                            </Col>
+                                        </Row>
+                                        </Form>
+                                    </Col>
+                                </Row>
+                            </div>
+                        </Col>
+                        </Row>
+                        <Row>
+                            <Col lg="12" md="12" sm="12">
+                                <MaterialTable icons={tableIcons}
+                                    title=""
+                                    columns={[
+                                        { title: "Crop Id", field: "crop__id", type: 'numeric' },
+                                        { title: "Crop Name", field: "crop__crop_name" },
+                                        { title: "Total Area", field: "TotalArea", type: 'numeric',
+                                        render:   rowData => { return (Math.round(rowData.TotalArea)); }
+                                        },
+                                        { title: "Verfication Status", field: "is_verified",
+                                          render: rowData => {
+                                                                if(rowData.is_verified === 1){
+                                                                    return(
+                                                                        <img 
+                                                                        src={verifiedIcon} 
+                                                                        alt="Verified"
+                                                                        className="verifiedStatusIcon"
+                                                                        title="Verified"/>
+                                                                        );
+                                                                }else if(rowData.is_verified === 0){
+                                                                    return(
+                                                                        <img 
+                                                                        src={notVerifiedIcon} 
+                                                                        alt="Not Verified" 
+                                                                        title="Not Verified"
+                                                                        className="verifiedStatusIcon" />
+                                                                        );
+                                                                    }
+                                                            },
+                                          cellStyle: { textAlign    :   "center" },
+                                          headerStyle:  { textAlign :   "center"}
+                                        },
+                                        { title: "Season", field: "season" }
+                                    ]}
+                                    data={cropsData.crops}
+                                    onRowClick={(event, rowData) =>{ this.getFarmersList(rowData.crop__id, rowData.season, rowData.year, rowData.is_verified, rowData.crop__crop_name); }}
+                                    // other props
+                                    /* detailPanel={[
+                                        {
+                                            tooltip: 'Show Farmer Details',
+                                            render: this.renderSelCropFarmerTab,
+                                        }
+                                    ]} */
+                                    options={{
+                                        doubleHorizontalScroll: true,
+                                        headerStyle: {
+                                            backgroundColor: '#A3C614',
+                                            color: '#555'
+                                        },
+                                        rowStyle: {
+                                            backgroundColor: '#e5e5e5',
+                                            borderBottom: '2px solid #fff',
+                                            textAlign: 'center'
+                                        },
+                                        filtering: false,
+                                        pageSize: 8
+                                    }}
+                                />  
+                            </Col>
+                        </Row>  
+                    </div>
+                )}                
+            </section>
+            </Fragment>
+        );
+    }
+
+    componentDidMount(){
+        this.setState({
+            isCropsPageLoading  :   true
+        },this.getCropsData())
+    }
+}
