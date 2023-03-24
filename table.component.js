@@ -54,8 +54,10 @@ const Table = (props) => {
       "farmer_nonaccessibility": "",
       "agri_activities": [],
       "financial_services": [],
-      "caste_name":"",
-      "name_of_fig":"",
+      "caste_id":"",
+      "farmer_fig_id":"",
+      "shared_alloted":"",
+      "total_share_value":"",
     }
   
  
@@ -153,13 +155,54 @@ const Table = (props) => {
   const [enlarged, setEnlarged] = useState(false);
   const [category,setCategory] = useState(null);
   const [figList,setFigList] = useState(null);
+  const [isChecked, setIsChecked] = useState(false);
+  const [changed,setChanged] = useState('');
+  const [figchanged,setFigChanged] = useState('');
+  const [showModal, setShowModal] = useState(false);
 
+  function handleImageClick() {
+    setShowModal(true);
+  }
 
- const handleSureCheckbox=(e)=>{
-  setCheckboxStatus(e.target.checked)
+  function handleCloseModal() {
+    setShowModal(false);
+  }
+  function MyModal({ showModal, setShowModal }) {
+    const handleCloseModal = () => setShowModal(false);
 
- }
-  
+    return (
+      <Modal
+        show={showModal}
+        onHide={handleCloseModal}
+        size="lg"
+        aria-labelledby="contained-modal-title-vcenter"
+        centered
+      >
+        <Modal.Header closeButton style={{ marginTop: "30px" }}></Modal.Header>
+        <Modal.Body>
+          <div style={{ height: "560px"}}>
+          {rowDetail.presigned_url!=null?
+              (<img
+                src={rowDetail.presigned_url} alt="photo"
+                height="100%"
+                width="100%"
+              />)
+                :                 
+              ( rowDetail.gender===2? <img src={farmerfemale} height="100%"
+              width="100%" alt="photo"/>
+              : <img src={farmerIcon} height="100%"
+              width="100%" alt="photo" />)
+              }
+            
+          </div>
+        </Modal.Body>
+      </Modal>
+    );
+  }
+  const handleSureCheckbox = (e) => {
+    setCheckboxStatus(e.target.checked);
+  };
+
   // const SelectMember=(e)=>{
   //   setSelectMember(e.target.value)
   // }
@@ -173,7 +216,28 @@ const Table = (props) => {
     setInterestedFarmerMandatory(false)
 
   }
- 
+  const SelectNoOfShares=(e)=>{
+
+    if (e.target.value == ''){
+      setChanged(0)
+    }
+    else {
+    setChanged(e.target.value)
+    }
+
+  }
+
+  const SelectNoOfValue=(e)=>{
+    if (e.target.value == ''){
+      setFigChanged(0)
+    }
+    else {
+      setFigChanged(e.target.value)
+
+    }
+
+  }
+  
   const modalOpen = (currentRow,EditDisable) => {
     
     setShow(true)
@@ -307,7 +371,6 @@ const onChangeData = (e, key) => {
 
       
     }
-   
     else if(key === 'age'){
       // console.log("age",e.target.value)
       let ageval=parseInt(e.target.value)
@@ -649,6 +712,8 @@ return false;
     setMemberAccepted(true)
     setFarmerId(currentRow.user_ptr_id)
     setMemberInterestStatus(currentRow.is_interested_as_member)
+    setChanged("0")
+    setFigChanged("0")
 
   }
   const hideMemberModal=()=>{
@@ -675,7 +740,7 @@ return false;
   }
  
   const handleAcceptedSave=()=>{
-      //  console.log("accepted save",radiobuttonstatus)
+       console.log("accepted save",radiobuttonstatus)
        if(radiobuttonstatus==="")
        {
         setInterestedFarmerMandatory(true)
@@ -687,9 +752,11 @@ return false;
         if(radiobuttonstatus==="Member")
         {
           data.append("is_member","1")
+          data.append("shared_alloted",changed)
+          data.append("total_share_value",figchanged)
 
         }
-        if(radiobuttonstatus==="Non Member")
+        else if(radiobuttonstatus==="Non Member")
         {
           data.append("is_member","0")
 
@@ -697,6 +764,7 @@ return false;
         var flag=false;
         UserService.UpdatedInterestedFarmers(data,selectedfarmerId).then(
           (response) => {
+            console.log(response,"responsee---")
             flag = true;
             if (response.data.success) {
              
@@ -1058,7 +1126,7 @@ return false;
   // console.log("all the data",rowData)
     return (
       <Row id={rowData.id} key={rowData.id} className={rowClassname(rowData.changed_number, rowData.farmer_nonaccessibility)}>
-        <Col lg="3" md="3" sm="3" className="">
+        <Col lg="2" md="2" sm="2" className="">
           <Row>
             <Col lg="2" md="2" sm="2" className="">
               {rowData.gender===2? <i className="farmerIconFemale"></i>: <i className="farmerIcon"></i>}
@@ -1079,13 +1147,13 @@ return false;
                 {rowData.first_name} <small className="dvaraBrownText" style={{fontWeight:"bold"}}>({rowData.is_member ? "Member" : "Non-member"})</small>
               </h4>}
              <br />
-              <h6 className="farmerListCardHeading dvaraBrownText">
+              <h6 className="farmerListCardHeading dvaraBrownText" style={{marginTop:"-10px"}}> 
                 {rowData.last_name} -- <small style={{color:"black"}}>{rowData.phone}</small>
               </h6><br />
               <FontAwesomeIcon
                 icon={faMapMarkerAlt}
                 className="dvaraGreenText"
-                style={{marginLeft:"8px",marginTop:"1px"}}
+                style={{marginTop:"1px"}}
               ></FontAwesomeIcon>
               <span className="farmersVillageName">&nbsp;
 
@@ -1093,35 +1161,43 @@ return false;
               </span>
             </Col>
           </Row>
-        </Col>
+        </Col>&nbsp;&nbsp;
         <Col lg="3" md="3" sm="3" className="noPadding">
           <Row className="noPadding">
-            <Col lg="2" md="2" className="noPadding">
+            <Col lg="1" md="1" className="noPadding">
               <i className="frIcon" title="Field Representative"></i>
-            </Col>
-            <Col lg="10" md="10" sm="10" className="noPadding">
+            </Col>&nbsp; &nbsp;
+            <Col lg="9" md="9" sm="9" className="noPadding">
               <h4 className="farmerListSubHeading dvaraBrownText">
-                &nbsp;
+                &nbsp; &nbsp;
                 {rowData.fr_name}
               </h4>
               <br />
-             <h6 className="farmerListCardHeading dvaraBrownText" style={{marginBottom:"10px"}}>Category: </h6>
-             <span>{rowData.caste_name}</span>
-             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-             <h6 className="farmerListCardHeading dvaraBrownText">FIGs: </h6>
-             <span>{rowData.name_of_fig}</span>
+             <h6 className="farmerListCardHeading dvaraBrownText" style={{marginBottom:"10px"}}>Caste : </h6>
+             <span> {rowData.Caste ? rowData.Caste : "Not updated"}</span>
+             &nbsp;&nbsp;&nbsp;
+             
               {/* <br />
               <h6 className="farmerListCardHeading dvaraBrownText">Financial product Interest : </h6>
             
                 <span>{rowData.interested_for_financial ? retrunFIValue(rowData.interested_for_financial) : "  NA"}</span> */}
               
                  <br />
-                 <h6 className="farmerListCardHeading dvaraBrownText">Special Services: </h6>
-                 <span>{rowData.special_services_interested}</span>
+                 <h6 className="farmerListCardHeading dvaraBrownText">FIGs : </h6>
+                 <span> {rowData.FIG ? rowData.FIG : "Not updated"}</span>
+                
                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
               
-              <OverlayTrigger key="left" placement="left"
+              
+            </Col>
+          </Row>
+        </Col>&nbsp;&nbsp;
+        <Col lg="2" md="1" sm="1">
+        <h6 className="farmerListCardHeading dvaraBrownText" >Special Services : </h6>
+                 <span> {rowData.special_services_interested}</span>
+                 <br />
+                 <OverlayTrigger key="left" placement="left"
           
           overlay={<Tooltip id="farmer_edit" >
           
@@ -1165,21 +1241,21 @@ return false;
 
             &nbsp;&nbsp;{rowData.app_downloaded }
              </span>
-            </Col>
-          </Row>
         </Col>
-        <Col lg="3" md="3" sm="3" className="noPadding">
+        <Col lg="2" md="3" sm="3" className="noPadding">
           <Row className="noPadding">
-            <Col lg="2" md="2" className="noPadding dvaraBrownText">
-              <b>Crops :</b>
+            <Col lg="2" md="2" className="noPadding dvaraBrownText" >
+              <b>Crops : </b>
+              {/* <Col style={{color:"black"}} className="noPadding crops-join">
+                {rowData.crops ? rowData.crops.join(", ") : "NA"}</Col> */}
             </Col>
             <Col lg="10" md="10" sm="10" className="noPadding crops-join">
-              {rowData.crops ? rowData.crops.join(", ") : "NA"}
+            &nbsp;&nbsp;&nbsp;{rowData.crops ? rowData.crops.join(", ") : "NA"}
             </Col>
           </Row>
-
         </Col>
-        <Col lg="2" md="2" sm="10" className="noPadding farmerCardSiteDetails">
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <Col lg="2" md="1" sm="1" className="noPadding farmerCardSiteDetails">
           <br />
           <span className="dvaraBrownText"><b>Total Registered Area:</b></span>&nbsp;{rowData.total_area ? rowData.total_area: 0 } Acres
           <ProgressBar className="farmersRegSiteBar" animated>
@@ -1197,17 +1273,15 @@ return false;
           &nbsp;/&nbsp;
           <span className="dvaraBrownText">{rowData.total_number_of_sites ? rowData.total_number_of_sites : 0}</span>
         </Col>
-        
-        <Col lg="1" md="1" sm="1" className="noPadding">
-          <br />
-         {DisableHandle()===true?
+
+        {DisableHandle()===true?
             <OverlayTrigger key="top" placement="top"
           
             overlay={<Tooltip id="farmer_edit">Dont't have access</Tooltip>}>
        
            
             <FontAwesomeIcon
-              style={{opacity:"0.4",position:"relative",left:"30px"}}
+              style={{opacity:"0.4",position:"relative",left:"10px",top:"20px"}}
               icon={faPencilAlt}
               className="dvaraBrownText"
             ></FontAwesomeIcon>
@@ -1221,7 +1295,7 @@ return false;
        
            
             <FontAwesomeIcon
-               style={{position:"relative",left:"50px"}}
+               style={{position:"relative",left:"10px",top:"20px"}}
               icon={faPencilAlt}
               className="dvaraBrownText"
               onClick={() => modalOpen(rowData)}
@@ -1236,7 +1310,7 @@ return false;
        
            
             <FontAwesomeIcon
-              style={{opacity:"0.4",position:"relative",left:"30px"}}
+              style={{opacity:"0.4",position:"relative",left:"15px",top:"20px"}}
               icon={faMobile}
               className="dvaraBrownText"
             ></FontAwesomeIcon>
@@ -1250,7 +1324,7 @@ return false;
        
            
             <FontAwesomeIcon
-               style={{position:"relative",left:"50px"}}
+               style={{position:"relative",left:"15px",top:"20px"}}
               icon={faMobile}
               className="dvaraBrownText"
               onClick={() => OtpmodalOpen(rowData)}
@@ -1258,7 +1332,7 @@ return false;
            
           </OverlayTrigger>
            }
-        </Col>
+
       </Row>
     );
   }
@@ -1746,11 +1820,14 @@ const re = /^[0-9\b]+$/;
                 
               <div style={{height:"100px",width:"130px",border:"1px solid black",borderRadius:"50%"}}>
               {rowDetail.presigned_url!=null?
-              (<img src={rowDetail.presigned_url} className="farmer-photo" alt="photo"/>)
+              (<img src={rowDetail.presigned_url} className="farmer-photo" alt="photo" onClick={handleImageClick}/>)
                 :                 
-              ( rowDetail.gender===2? <img src={farmerfemale} style={{height:"80px",width:"110px",marginLeft:"8px",marginTop:"6px"}} alt="photo"/>
-              : <img src={farmerIcon} style={{height:"70px",width:"120px",marginTop:"10px",marginLeft:"5px"}} alt="photo" />)
+              ( rowDetail.gender===2? <img src={farmerfemale} style={{height:"80px",width:"110px",marginLeft:"8px",marginTop:"6px"}} alt="photo" onClick={handleImageClick}/>
+              : <img src={farmerIcon} style={{height:"70px",width:"120px",marginTop:"10px",marginLeft:"5px"}} alt="photo" onClick={handleImageClick} />)
               }
+              <MyModal
+               showModal={showModal}
+               setShowModal={setShowModal}/>
                 </div>
                 <Form.Group as={Col} >
                   <Form.Label className="dvaraBrownText" style={{fontSize:"97%"}}><b>First Name</b></Form.Label>
@@ -1813,14 +1890,15 @@ const re = /^[0-9\b]+$/;
               </Row>
               <Row className="mb-3">
                  <Form.Group as={Col} >
-                  <Form.Label className="dvaraBrownText" style={{fontSize:"95%"}}><b>Category</b></Form.Label>
+                  <Form.Label className="dvaraBrownText" style={{fontSize:"95%"}}><b>Caste</b></Form.Label>
                   <Form.Control
                     as="select"
                     // size="sm"
-                    value={rowDetail.caste_name}
+                    value={rowDetail.caste_id}
                     custom
-                    onChange={(e) => onChangeData(e, "caste_name")}
+                    onChange={(e) => onChangeData(e, "caste_id")}
                   >
+                    <option value=''>Choose</option>
                      {category?.map(category => (
                         <option value={category.id}>{category.caste_name}</option>
                       ))}
@@ -1832,10 +1910,11 @@ const re = /^[0-9\b]+$/;
                   <Form.Control
                     as="select"
                     // size="sm"
-                    value={rowDetail.name_of_fig}
+                    value={rowDetail.farmer_fig_id}
                     custom
-                    onChange={(e) => onChangeData(e, "name_of_fig")}
+                    onChange={(e) => onChangeData(e, "farmer_fig_id")}
                   >
+                    <option value=''>Choose</option>
                      {figList?.map(figList => (
                         <option value={figList.id}>{figList.name_of_fig}</option>
                       ))}
@@ -1846,13 +1925,38 @@ const re = /^[0-9\b]+$/;
               <Row className="mb-3">
               <Form.Group as={Col} >
                   <Form.Label className="dvaraBrownText" style={{fontSize:"95%"}}><b>No. of Shares Alloted</b></Form.Label>
-                  <Form.Control type="text" maxLength={3} placeholder="No. of Shares Alloted"        
-                  />                  
+                  <Form.Control type="text" placeholder="No. of Shares Alloted" 
+                  value={parseInt(rowDetail.shared_alloted) == 0 ? (''):(rowDetail.shared_alloted)}
+                  maxLength={3}
+
+                  onChange={(e) => {
+                    if(parseInt(e.target.value) >= 0 && parseInt(e.target.value) < 1000){
+                      onChangeData(e, "shared_alloted")
+                    }
+                    else {
+                      e.target.value = 0
+                      onChangeData(e, "shared_alloted")
+                    }
+                    }} />
+                                    
                 </Form.Group>                
                 <Form.Group as={Col} >
-                  <Form.Label className="dvaraBrownText" style={{fontSize:"95%"}}><b>Total Share Value(Paid)</b></Form.Label>                  
-                  <Form.Control type="text" placeholder="Total Share Value(Paid)"
-                  maxLength={5}                   
+                  <Form.Label className="dvaraBrownText" style={{fontSize:"95%"}}><b>Total Share Value(Paid) Rs.</b></Form.Label>                  
+                  <Form.Control type="text" placeholder="Rs .Total Share Value(Paid)" 
+                  // value={rowDetail.total_share_value}
+                  value={parseInt(rowDetail.total_share_value) == 0 ? (''):(rowDetail.total_share_value)}
+                  maxLength={5}  
+                  onChange={(e) => {
+                    if(parseInt(e.target.value) >= 0 && parseInt(e.target.value) <= 99999){
+                      onChangeData(e, "total_share_value")
+
+                    }
+                    else {
+                      e.target.value = 0
+                      onChangeData(e, "total_share_value")
+                    }
+                    
+                    }}
                   />
                 </Form.Group>
 
@@ -2443,24 +2547,69 @@ const re = /^[0-9\b]+$/;
                                             <Col md="10">
                                             <Form.Group controlId="formGridAddress1 " style={{position:"relative",left:"5%"}}>
           <div onChange={handleMemberChange}>         
-          <input type="radio" id="Member" name="fav_language" value="Member"/>
-          <label for="Member"style={{marginLeft:"10px"}} >Member</label>
-          <input type="radio" id="Non Member" name="fav_language" value="Non Member" style={{marginLeft:"20px"}}/>
-          <label for="Non Member" style={{marginLeft:"10px"}} >Non Member</label>
-          <br />
-          <div style={{display:"flex"}}>
+          <input type="radio" id="Member" name="fav_language" value="Member" onChange={() => setIsChecked(true)}/>
+          <label for="Member"style={{marginLeft:"10px"}}>Member</label>
+          <input type="radio" id="Non Member" name="fav_language" value="Non Member" style={{marginLeft:"20px"}} onChange={() => setIsChecked(false)}/>
+          <label for="Non Member" style={{marginLeft:"10px"}} >Non Member</label>  
+          </div>               
+          { isChecked  ?                
+          <>
+          <Form.Group as={Col} >
+                  <Form.Label className="dvaraBrownText" style={{fontSize:"95%"}}><b>No. of Shares Alloted</b></Form.Label>
+                  <Form.Control type="text" placeholder="No. of Shares Alloted" 
+                  value={parseInt(rowDetail.shared_alloted) == 0 ? (''):(rowDetail.shared_alloted)}
+                  maxLength={3}
+
+                  onChange={(e) => {
+                    if(parseInt(e.target.value) > 0 && parseInt(e.target.value) < 1000){
+                      setChanged(e.target.value)
+                    }
+                    else {
+                      e.target.value = ''
+                      setChanged(e.target.value)
+                    }
+                    }} />
+                                    
+                </Form.Group>  
+
+                <Form.Group as={Col} >
+                  <Form.Label className="dvaraBrownText" style={{fontSize:"95%"}}><b>Total Share Value(Paid) Rs.</b></Form.Label>                  
+                  <Form.Control type="text" placeholder="Rs .Total Share Value(Paid)" 
+                  // value={rowDetail.total_share_value}
+                  value={parseInt(rowDetail.total_share_value) == 0 ? (''):(rowDetail.total_share_value)}
+                  maxLength={5}  
+                  onChange={(e) => {
+                    if(parseInt(e.target.value) > 0 && parseInt(e.target.value) <= 99999){
+                      // onChangeData(e, "total_share_value")
+                      setFigChanged(e.target.value)
+                    }
+                    else {
+                      e.target.value = ''
+                      setFigChanged(e.target.value)
+                    }
+                    
+                    }}
+                  />
+                </Form.Group>
+
+
+          {/* <div style={{display:"flex"}}>
           <h6 style={{marginBottom:"20px",marginTop:"10px",marginLeft:"-10px"}}>No. of Shares Allotted : </h6>
           <input type="text" 
-           style={{width:"20%",padding:"5px",border: "1px solid #ced4da",height:"30px",borderRadius:"5px",marginLeft:"45px",marginTop:"10px"}}
-           maxLength={3} />         
-          </div>          
-          <div style={{display:"flex"}}>
+                        style={{width:"20%",padding:"5px",border: "1px solid #ced4da",height:"30px",borderRadius:"5px",marginLeft:"45px",marginTop:"10px"}}                       
+                          maxLength={3}
+                        onChange={SelectNoOfShares} />     
+          </div>           */}
+
+          {/* <div style={{display:"flex"}}>
           <h6 style={{marginBottom:"20px",marginLeft:"-10px"}}>Total Shares Value : </h6>
-          <input type="text"
+          <input type="text" onChange={SelectNoOfValue}
            style={{width:"20%",padding:"5px",border: "1px solid #ced4da",height:"30px",marginLeft:"70px",borderRadius:"5px"}}
-           maxLength={5} />         
-          </div>
-          </div> 
+           maxLength={5}  />         
+          </div> */}
+          </>
+           : ''}
+           
                   </Form.Group>
                   </Col>
                   </Row>
