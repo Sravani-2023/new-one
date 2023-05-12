@@ -24,7 +24,7 @@ import AuthService from "../services/auth.service";
 import "../assets/css/landholding.css";
 import "../assets/css/inputproducts.css";
 import moment from 'moment';
-import ballLoader from "../assets/img/ballLoader.gif";
+import bo_green from "../assets/img/bo_green.png";
 
 // function addAfter(array, index, newItem) {
 //     return [
@@ -50,8 +50,8 @@ export default class BoProductInput extends Component {
           // selectedYear:"2021-2022",
           // selectedSeason:"Kharif",
           // selectedStatus:"yes",
-          selectedYear:"2022-2023",
-          selectedSeason:"Kharif",
+          selectedYear:"",
+          selectedSeason:"",
           selectedStatus:"all",
           showFilterError:false,
           showFilterErrorMessage:"",
@@ -106,12 +106,7 @@ navigateToPage = (pageName) => {
    componentDidMount() {
     var flag = false;
     const user = AuthService.getCurrentUser();
-    const fpoId = localStorage.getItem("fpoId")
-    const currentYear = user.current_year;
-    const currentSeason = user.current_season;
-    const ProductAccordionDataLocalStorage =JSON.parse(localStorage.getItem("ProductAccordionData"));
-    const filterItemData=JSON.parse(localStorage.getItem("filterItemData"));
-    //  console.log("ProductAccordionDataLocalStorage",ProductAccordionDataLocalStorage)
+ 
     if (!user) {
         this.props.history.push('/')
         return
@@ -124,11 +119,20 @@ navigateToPage = (pageName) => {
     //   );
     //   console.log("nameOfMonth",nameOfMonth); 
    
+    const fpoId = localStorage.getItem("fpoId")
+    const currentYear = user.current_year;
+    const currentSeason = user.current_season;
+    const ProductAccordionDataLocalStorage =JSON.parse(localStorage.getItem("ProductAccordionData"));
+    const filterItemData=JSON.parse(localStorage.getItem("filterItemData"));
+
     if (user) {
         this.setState({
           currentUser: user,
           CurrentYear:currentYear,
           CurrentSeason:currentSeason,
+          selectedYear:currentYear,
+          selectedSeason:currentSeason
+          
         });
       }
     UserService.getYearRanges().then(
@@ -193,7 +197,7 @@ navigateToPage = (pageName) => {
         else{
             // console.log("no")
 
-            this.handleGetAccordionData(this.state.selectedSeason,this.state.selectedYear,this.state.selectedStatus)
+            this.handleGetAccordionData(currentSeason,currentYear,this.state.selectedStatus)
 
         }
     //   this.handleGetAccordionData(this.state.selectedSeason,this.state.selectedYear,this.state.selectedStatus)
@@ -609,7 +613,7 @@ handleProductRowDisable=()=>{
                                   size="sm"
                                   as="select"
                                 //   className={this.state.ceomonthclass}
-                                  value={this.state.CurrentSeason}
+                                  value={selectedSeason}
                                   onChange={this.handleselectedSeason}
                                   style={{border:"1px solid grey",color:"brown"
                                 }}
@@ -628,7 +632,7 @@ handleProductRowDisable=()=>{
                                   size="sm"
                                   as="select"
                                 //   className={this.state.ceomonthclass}
-                                  value={this.state.CurrentYear}
+                                  value={selectedYear}
                                   onChange={this.handleselectedYear}
                                   style={{border:"1px solid grey",color:"brown"}}
 
@@ -666,7 +670,7 @@ handleProductRowDisable=()=>{
                 <div>
                   
                   {/* {staticResponse.length!=0?<RenderProductDiv/>:"No Data To Display"} */}
-                  {uniqueDataloading?<img src={ballLoader} width="500px" style={{position:"relative",left:"32%",top:"170px"}}/>
+                  {uniqueDataloading?<img src={bo_green} height="180px" style={{ position: "relative", top: "120px", left: "45%" }} />
                   // <span className="spinner-border spinner-border-lg mainCropsFarmerLoader" style={{marginTop:"200px"}}></span>
                   :
                   staticResponse.length!=0?<RenderProductDiv/>: <div style={{textAlign:"center",marginTop:"200px",color:"#007bff",fontSize:"18px"}}>No Data To Display</div>
